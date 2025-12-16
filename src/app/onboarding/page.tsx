@@ -101,6 +101,7 @@ export default function OnboardingPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [roleAnswers, setRoleAnswers] = useState<Role[]>([]);
   const [hardRuleInput, setHardRuleInput] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const [state, setState] = useState<OnboardingState>({
     moneyAllowedActors: ["family", "friend"],
     moneyMaxAmount: undefined,
@@ -161,28 +162,45 @@ export default function OnboardingPage() {
 
     if (step === STEPS.length - 1) {
       // Submit profile
-      await fetch("/api/user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          primaryRole: state.primaryRole,
-          secondaryRole: state.secondaryRole,
-          loadProfile: state.loadProfile,
-          moneyPolicy: {
-            requireReturnDate: state.moneyRequireReturnDate,
-            allowedActors: state.moneyAllowedActors,
-            maxAmount: state.moneyMaxAmount,
-          },
-          supportPolicy: {
-            maxWeekly: state.supportMaxWeekly,
-            allowedActors: state.supportAllowedActors,
-          },
-          hardRules: state.hardRules,
-          calendarConnected: state.calendarConnected,
-        }),
-      });
-      router.push("/");
+      try {
+        setIsProcessing(true);
+        const response = await fetch("/api/user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            primaryRole: state.primaryRole,
+            secondaryRole: state.secondaryRole,
+            loadProfile: state.loadProfile,
+            moneyPolicy: {
+              requireReturnDate: state.moneyRequireReturnDate,
+              allowedActors: state.moneyAllowedActors,
+              maxAmount: state.moneyMaxAmount,
+            },
+            supportPolicy: {
+              maxWeekly: state.supportMaxWeekly,
+              allowedActors: state.supportAllowedActors,
+            },
+            hardRules: state.hardRules,
+            calendarConnected: state.calendarConnected,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          alert(`Ошибка сохранения профиля: ${error.error || 'Неизвестная ошибка'}`);
+          setIsProcessing(false);
+          return;
+        }
+
+        // Profile saved successfully, wait a bit for DB to sync, then redirect
+        await new Promise(resolve => setTimeout(resolve, 500));
+        router.push("/");
+      } catch (error) {
+        console.error("Profile save error:", error);
+        alert("Ошибка при сохранении профиля. Попробуйте ещё раз.");
+        setIsProcessing(false);
+      }
       return;
     }
 
@@ -563,11 +581,15 @@ export default function OnboardingPage() {
 
           {/* Navigation */}
           <div className="p-6 pt-0 flex justify-between">
-            <Button variant="ghost" onClick={handleBack} disabled={step === 0}>
+            <Button variant="ghost" onClick={handleBack} disabled={step === 0 || isProcessing}>
               Назад
             </Button>
-            <Button onClick={handleNext} disabled={!canProceed()}>
-              {step === STEPS.length - 1 ? "Завершить" : "Далее"}
+            <Button onClick={handleNext} disabled={!canProceed() || isProcessing}>
+              {isProcessing 
+                ? "Сохранение..." 
+                : step === STEPS.length - 1 
+                ? "Завершить" 
+                : "Далее"}
             </Button>
           </div>
         </Card>
