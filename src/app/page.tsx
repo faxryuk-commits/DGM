@@ -162,8 +162,11 @@ export default function HomePage() {
             duration: parsedData?.params.duration,
           }),
         });
+        // Show success message
+        alert("Обязательство создано успешно!");
       } catch (error) {
         console.error("Commitment error:", error);
+        alert("Ошибка при создании обязательства");
       } finally {
         setIsProcessing(false);
       }
@@ -261,7 +264,17 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        {/* Welcome Section - только на шаге capture */}
+        {step === "capture" && (
+          <div className="text-center space-y-2 mb-6">
+            <h2 className="text-2xl font-bold">Готовы принять решение?</h2>
+            <p className="text-muted-foreground">
+              Вставьте текст запроса, и система поможет принять правильное решение
+            </p>
+          </div>
+        )}
+
         {/* Step: Capture */}
         {step === "capture" && (
           <Card className="border-border/50 shadow-lg">
