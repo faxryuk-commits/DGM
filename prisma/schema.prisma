@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 // =============================================
-// ENUMS (stored as strings in SQLite)
+// ENUMS (Postgres supports native enums)
 // =============================================
 
 // Roles: Creator, Manager, Expert, Helper, Executor

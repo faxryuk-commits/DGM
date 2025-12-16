@@ -4,18 +4,42 @@
 
 ## Настройка для Vercel
 
-### Переменные окружения
+### 1. Создайте Prisma Postgres в Vercel
 
-В настройках Vercel проекта добавьте:
+1. Vercel Dashboard → Storage → Create Database → **Prisma Postgres**
+2. Скопируйте переменные окружения из Quickstart
 
-**База данных (обязательно):**
+### 2. Подключите проект к Vercel
+
+```bash
+vercel link
 ```
-DATABASE_URL="postgresql://user:password@host:5432/dbname"
+
+### 3. Получите DATABASE_URL из Vercel
+
+```bash
+vercel env pull .env.local
 ```
 
-Или используйте Vercel Postgres:
-1. В Vercel Dashboard → Storage → Create Database → Postgres
-2. Скопируйте `POSTGRES_PRISMA_URL` в `DATABASE_URL`
+Это создаст `.env.local` с `DATABASE_URL` от вашего Prisma Postgres.
+
+### 4. Примените миграции
+
+```bash
+npx prisma db push
+```
+
+Или создайте миграцию:
+```bash
+npx prisma migrate dev --name init
+```
+
+### 5. Переменные окружения в Vercel
+
+В Vercel Dashboard → Settings → Environment Variables добавьте:
+
+**База данных (автоматически из Prisma Postgres):**
+- `DATABASE_URL` (уже добавлен при создании БД)
 
 **Google Calendar (опционально):**
 ```
@@ -25,12 +49,13 @@ GOOGLE_CLIENT_SECRET="ваш-client-secret"
 GOOGLE_REDIRECT_URI="https://ваш-домен.vercel.app/api/auth/google/callback"
 ```
 
-### Миграция БД
+### 6. Деплой
 
-После настройки DATABASE_URL:
 ```bash
-npx prisma db push
+vercel deploy
 ```
+
+Или просто push в GitHub — Vercel задеплоит автоматически.
 
 ## Локальная разработка
 
