@@ -41,7 +41,6 @@ export async function GET(request: NextRequest) {
     });
 
     // Redirect back to app
-    const baseUrl = new URL(request.url).origin;
     return NextResponse.redirect(
       `${baseUrl}/?calendar_connected=true`
     );
