@@ -497,17 +497,42 @@ export default function OnboardingPage() {
                   Это необязательно — можно пропустить.
                 </CardDescription>
                 <div className="flex flex-col gap-4">
-                  <Button
-                    variant={state.calendarConnected ? "default" : "outline"}
-                    className="w-full justify-center py-6"
-                    onClick={() => setState((s) => ({ ...s, calendarConnected: true }))}
-                  >
-                    {state.calendarConnected ? "✓ Календарь подключён" : "Подключить Google Calendar"}
-                  </Button>
-                  {!state.calendarConnected && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      Можно подключить позже в настройках
-                    </p>
+                  {state.calendarConnected ? (
+                    <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <p className="text-green-600 dark:text-green-400 font-medium text-center">
+                        ✓ Календарь подключён
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-center py-6"
+                        onClick={async () => {
+                          if (!userId) return;
+                          
+                          try {
+                            const res = await fetch(`/api/auth/google?userId=${userId}`);
+                            const data = await res.json();
+                            
+                            if (data.authUrl) {
+                              // Redirect to Google OAuth
+                              window.location.href = data.authUrl;
+                            } else {
+                              alert('Ошибка подключения. Проверьте настройки Google Calendar.');
+                            }
+                          } catch (error) {
+                            console.error('OAuth init error:', error);
+                            alert('Ошибка подключения календаря.');
+                          }
+                        }}
+                      >
+                        Подключить Google Calendar
+                      </Button>
+                      <p className="text-sm text-muted-foreground text-center">
+                        Можно подключить позже в настройках
+                      </p>
+                    </>
                   )}
                 </div>
               </div>

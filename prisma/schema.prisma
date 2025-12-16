@@ -48,6 +48,8 @@ model UserProfile {
   supportPolicy     String   // JSON string
   hardRules         String   // JSON string array
   calendarConnected Boolean  @default(false)
+  calendarToken     String?  // Encrypted Google Calendar access token
+  calendarRefreshToken String? // Encrypted Google Calendar refresh token
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }

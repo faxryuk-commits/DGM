@@ -70,6 +70,13 @@ export default function HomePage() {
         setUserId(stored);
         setHasProfile(true);
         setEnergyLevel(data.user.dynamicState?.energyLevel || "green");
+        
+        // Check if calendar was just connected
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('calendar_connected') === 'true') {
+          // Refresh to show updated state
+          window.history.replaceState({}, '', window.location.pathname);
+        }
       } catch {
         router.push("/onboarding");
       } finally {
@@ -119,8 +126,8 @@ export default function HomePage() {
       setResponseText(data.templateText);
       
       if (data.result === "ALLOW" && data.requiresCalendar) {
-        // Fetch calendar slots
-        const calRes = await fetch(`/api/calendar?duration=${parsedData?.params.duration || 60}&days=7`);
+        // Fetch calendar slots with userId
+        const calRes = await fetch(`/api/calendar?duration=${parsedData?.params.duration || 60}&days=7&userId=${userId}`);
         const calData = await calRes.json();
         setCalendarSlots(calData.slots || []);
         setStep("calendar");
