@@ -7,8 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import type { Role, LoadProfile, ActorType } from "@/lib/types";
 
 // =============================================
@@ -84,7 +86,10 @@ interface OnboardingState {
   secondaryRole?: Role;
   loadProfile?: LoadProfile;
   moneyAllowedActors: ActorType[];
+  moneyMaxAmount?: number;
+  moneyRequireReturnDate: boolean;
   supportAllowedActors: ActorType[];
+  supportMaxWeekly: number;
   hardRules: string[];
   calendarConnected: boolean;
 }
@@ -97,7 +102,10 @@ export default function OnboardingPage() {
   const [hardRuleInput, setHardRuleInput] = useState("");
   const [state, setState] = useState<OnboardingState>({
     moneyAllowedActors: ["family", "friend"],
+    moneyMaxAmount: undefined,
+    moneyRequireReturnDate: true,
     supportAllowedActors: ["family", "friend", "team"],
+    supportMaxWeekly: 3,
     hardRules: [],
     calendarConnected: false,
   });
@@ -161,11 +169,12 @@ export default function OnboardingPage() {
           secondaryRole: state.secondaryRole,
           loadProfile: state.loadProfile,
           moneyPolicy: {
-            requireReturnDate: true,
+            requireReturnDate: state.moneyRequireReturnDate,
             allowedActors: state.moneyAllowedActors,
+            maxAmount: state.moneyMaxAmount,
           },
           supportPolicy: {
-            maxWeekly: 3,
+            maxWeekly: state.supportMaxWeekly,
             allowedActors: state.supportAllowedActors,
           },
           hardRules: state.hardRules,
@@ -322,45 +331,125 @@ export default function OnboardingPage() {
             {/* Step 3: Money & Support Policies */}
             {step === 3 && (
               <div className="space-y-8">
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Политика денежных просьб</h3>
-                  <CardDescription>Кому вы готовы давать деньги в долг?</CardDescription>
-                  <div className="flex flex-wrap gap-2">
-                    {(["family", "friend", "team", "client", "unknown"] as ActorType[]).map((actor) => (
-                      <Button
-                        key={actor}
-                        variant={state.moneyAllowedActors.includes(actor) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleActorType(state.moneyAllowedActors, actor, "moneyAllowedActors")}
-                      >
-                        {actor === "family" && "Семья"}
-                        {actor === "friend" && "Друзья"}
-                        {actor === "team" && "Команда"}
-                        {actor === "client" && "Клиенты"}
-                        {actor === "unknown" && "Незнакомцы"}
-                      </Button>
-                    ))}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold mb-2">Политика денежных просьб</h3>
+                    <CardDescription>Настройте правила для финансовых запросов</CardDescription>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Кому вы готовы давать деньги в долг?</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {(["family", "friend", "team", "client", "unknown"] as ActorType[]).map((actor) => (
+                          <Button
+                            key={actor}
+                            variant={state.moneyAllowedActors.includes(actor) ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleActorType(state.moneyAllowedActors, actor, "moneyAllowedActors")}
+                          >
+                            {actor === "family" && "Семья"}
+                            {actor === "friend" && "Друзья"}
+                            {actor === "team" && "Команда"}
+                            {actor === "client" && "Клиенты"}
+                            {actor === "unknown" && "Незнакомцы"}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="moneyMaxAmount" className="text-sm font-medium mb-2 block">
+                          Максимальная сумма без обсуждения (₽)
+                        </Label>
+                        <Input
+                          id="moneyMaxAmount"
+                          type="number"
+                          placeholder="Оставьте пустым, если нет лимита"
+                          value={state.moneyMaxAmount || ""}
+                          onChange={(e) => setState((s) => ({ 
+                            ...s, 
+                            moneyMaxAmount: e.target.value ? parseInt(e.target.value) : undefined 
+                          }))}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Запросы выше этой суммы будут автоматически отложены
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="requireReturnDate"
+                          checked={state.moneyRequireReturnDate}
+                          onChange={(e) => setState((s) => ({ 
+                            ...s, 
+                            moneyRequireReturnDate: e.target.checked 
+                          }))}
+                          className="w-4 h-4 rounded border-border"
+                        />
+                        <Label htmlFor="requireReturnDate" className="text-sm cursor-pointer">
+                          Требовать дату возврата
+                        </Label>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Политика поддержки</h3>
-                  <CardDescription>Кому вы готовы оказывать эмоциональную поддержку?</CardDescription>
-                  <div className="flex flex-wrap gap-2">
-                    {(["family", "friend", "team", "client", "unknown"] as ActorType[]).map((actor) => (
-                      <Button
-                        key={actor}
-                        variant={state.supportAllowedActors.includes(actor) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleActorType(state.supportAllowedActors, actor, "supportAllowedActors")}
-                      >
-                        {actor === "family" && "Семья"}
-                        {actor === "friend" && "Друзья"}
-                        {actor === "team" && "Команда"}
-                        {actor === "client" && "Клиенты"}
-                        {actor === "unknown" && "Незнакомцы"}
-                      </Button>
-                    ))}
+                <Separator />
+
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold mb-2">Политика поддержки</h3>
+                    <CardDescription>Настройте правила для эмоциональной поддержки</CardDescription>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Кому вы готовы оказывать эмоциональную поддержку?</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {(["family", "friend", "team", "client", "unknown"] as ActorType[]).map((actor) => (
+                          <Button
+                            key={actor}
+                            variant={state.supportAllowedActors.includes(actor) ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleActorType(state.supportAllowedActors, actor, "supportAllowedActors")}
+                          >
+                            {actor === "family" && "Семья"}
+                            {actor === "friend" && "Друзья"}
+                            {actor === "team" && "Команда"}
+                            {actor === "client" && "Клиенты"}
+                            {actor === "unknown" && "Незнакомцы"}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <Label htmlFor="supportMaxWeekly" className="text-sm font-medium mb-2 block">
+                        Максимум запросов поддержки в неделю
+                      </Label>
+                      <Input
+                        id="supportMaxWeekly"
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={state.supportMaxWeekly}
+                        onChange={(e) => setState((s) => ({ 
+                          ...s, 
+                          supportMaxWeekly: parseInt(e.target.value) || 1 
+                        }))}
+                        className="w-32"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        После достижения лимита новые запросы будут отклоняться
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
