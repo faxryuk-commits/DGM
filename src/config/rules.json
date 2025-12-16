@@ -1,0 +1,309 @@
+{
+  "roles": [
+    {
+      "id": "creator",
+      "name": "Creator",
+      "description": "Focused on creation, deep work, and original output"
+    },
+    {
+      "id": "manager",
+      "name": "Manager",
+      "description": "Focused on coordination, delegation, and team alignment"
+    },
+    {
+      "id": "expert",
+      "name": "Expert",
+      "description": "Focused on specialized knowledge and consulting"
+    },
+    {
+      "id": "helper",
+      "name": "Helper",
+      "description": "Focused on supporting others and service"
+    },
+    {
+      "id": "executor",
+      "name": "Executor",
+      "description": "Focused on task completion and delivery"
+    }
+  ],
+
+  "intents": [
+    {
+      "id": "money",
+      "name": "Money",
+      "resource": "financial",
+      "description": "Requests involving financial transactions"
+    },
+    {
+      "id": "time",
+      "name": "Time",
+      "resource": "temporal",
+      "description": "Requests requiring time commitment"
+    },
+    {
+      "id": "attention",
+      "name": "Attention",
+      "resource": "cognitive",
+      "description": "Requests requiring mental focus"
+    },
+    {
+      "id": "work-change",
+      "name": "Work-change",
+      "resource": "structural",
+      "description": "Requests to change work scope or direction"
+    },
+    {
+      "id": "support",
+      "name": "Support",
+      "resource": "emotional",
+      "description": "Requests for emotional or moral support"
+    },
+    {
+      "id": "intro",
+      "name": "Intro",
+      "resource": "social",
+      "description": "Requests for introductions or connections"
+    },
+    {
+      "id": "errand",
+      "name": "Errand",
+      "resource": "operational",
+      "description": "Small tasks or favors"
+    },
+    {
+      "id": "decision-pressure",
+      "name": "Decision-pressure",
+      "resource": "cognitive",
+      "description": "Requests with urgency or pressure to decide"
+    },
+    {
+      "id": "emotional-load",
+      "name": "Emotional-load",
+      "resource": "emotional",
+      "description": "Requests that carry emotional weight"
+    }
+  ],
+
+  "role_intent_matrix": {
+    "creator": {
+      "money": "CONDITIONAL",
+      "time": "FORBID",
+      "attention": "FORBID",
+      "work-change": "CONDITIONAL",
+      "support": "CONDITIONAL",
+      "intro": "CONDITIONAL",
+      "errand": "FORBID",
+      "decision-pressure": "FORBID",
+      "emotional-load": "CONDITIONAL"
+    },
+    "manager": {
+      "money": "CONDITIONAL",
+      "time": "CONDITIONAL",
+      "attention": "CONDITIONAL",
+      "work-change": "CONDITIONAL",
+      "support": "CONDITIONAL",
+      "intro": "ALLOW",
+      "errand": "CONDITIONAL",
+      "decision-pressure": "CONDITIONAL",
+      "emotional-load": "CONDITIONAL"
+    },
+    "expert": {
+      "money": "CONDITIONAL",
+      "time": "CONDITIONAL",
+      "attention": "CONDITIONAL",
+      "work-change": "FORBID",
+      "support": "CONDITIONAL",
+      "intro": "CONDITIONAL",
+      "errand": "FORBID",
+      "decision-pressure": "FORBID",
+      "emotional-load": "CONDITIONAL"
+    },
+    "helper": {
+      "money": "CONDITIONAL",
+      "time": "CONDITIONAL",
+      "attention": "CONDITIONAL",
+      "work-change": "CONDITIONAL",
+      "support": "ALLOW",
+      "intro": "ALLOW",
+      "errand": "CONDITIONAL",
+      "decision-pressure": "CONDITIONAL",
+      "emotional-load": "ALLOW"
+    },
+    "executor": {
+      "money": "CONDITIONAL",
+      "time": "FORBID",
+      "attention": "FORBID",
+      "work-change": "FORBID",
+      "support": "CONDITIONAL",
+      "intro": "CONDITIONAL",
+      "errand": "CONDITIONAL",
+      "decision-pressure": "FORBID",
+      "emotional-load": "CONDITIONAL"
+    }
+  },
+
+  "profiles": {
+    "A": {
+      "name": "High Load",
+      "description": "Maximum capacity, minimal flexibility",
+      "limits": {
+        "daily_commitments": 2,
+        "weekly_money_requests": 1,
+        "weekly_time_blocks": 3,
+        "concurrent_projects": 3
+      }
+    },
+    "B": {
+      "name": "Medium Load",
+      "description": "Balanced capacity",
+      "limits": {
+        "daily_commitments": 4,
+        "weekly_money_requests": 3,
+        "weekly_time_blocks": 6,
+        "concurrent_projects": 5
+      }
+    },
+    "C": {
+      "name": "Low Load",
+      "description": "High availability",
+      "limits": {
+        "daily_commitments": 6,
+        "weekly_money_requests": 5,
+        "weekly_time_blocks": 10,
+        "concurrent_projects": 8
+      }
+    }
+  },
+
+  "policies": {
+    "money": {
+      "default_action": "DEFER",
+      "require_return_date": true,
+      "require_amount": true,
+      "max_without_review": 0
+    },
+    "support": {
+      "default_action": "CONDITIONAL",
+      "require_agenda": false,
+      "max_weekly": 3
+    },
+    "time": {
+      "default_action": "CONDITIONAL",
+      "require_duration": true,
+      "require_calendar_slot": true
+    },
+    "intro": {
+      "default_action": "CONDITIONAL",
+      "require_two_line_pitch": true
+    }
+  },
+
+  "templates": {
+    "allow_default": {
+      "key": "allow_default",
+      "text": "Да, я могу это сделать.",
+      "result": "ALLOW"
+    },
+    "allow_with_conditions": {
+      "key": "allow_with_conditions",
+      "text": "Да, но с условиями: {conditions}",
+      "result": "ALLOW"
+    },
+    "defer_need_time": {
+      "key": "defer_need_time",
+      "text": "Мне нужно время, чтобы подумать. Вернусь с ответом до {date}.",
+      "result": "DEFER"
+    },
+    "defer_need_info": {
+      "key": "defer_need_info",
+      "text": "Мне нужна дополнительная информация: {questions}",
+      "result": "DEFER"
+    },
+    "forbid_no_capacity": {
+      "key": "forbid_no_capacity",
+      "text": "К сожалению, сейчас у меня нет возможности.",
+      "result": "FORBID"
+    },
+    "forbid_policy": {
+      "key": "forbid_policy",
+      "text": "Это не соответствует моим текущим приоритетам.",
+      "result": "FORBID"
+    },
+    "forbid_energy": {
+      "key": "forbid_energy",
+      "text": "Сейчас не лучшее время для этого. Давайте вернёмся к этому позже.",
+      "result": "FORBID"
+    },
+    "money_defer": {
+      "key": "money_defer",
+      "text": "Мне нужно время, чтобы оценить эту просьбу. Вернусь с ответом.",
+      "result": "DEFER"
+    },
+    "money_forbid": {
+      "key": "money_forbid",
+      "text": "К сожалению, сейчас я не могу помочь финансово.",
+      "result": "FORBID"
+    },
+    "time_forbid": {
+      "key": "time_forbid",
+      "text": "Мой календарь сейчас заполнен. Не получится.",
+      "result": "FORBID"
+    },
+    "intro_need_pitch": {
+      "key": "intro_need_pitch",
+      "text": "Чтобы сделать интро, мне нужен короткий питч (2 строки): кто вы и зачем это нужно.",
+      "result": "DEFER"
+    }
+  },
+
+  "system_rules": [
+    {
+      "id": "hard_rule_check",
+      "description": "Check user's hard rules first",
+      "gate": 1,
+      "action": "Check if request matches any hard rule patterns"
+    },
+    {
+      "id": "decision_pressure_flag",
+      "description": "Flag requests with decision pressure",
+      "gate": 1,
+      "action": "If decisionPressure is true, add reason code 'PRESSURE_DETECTED'"
+    },
+    {
+      "id": "red_energy_block",
+      "description": "Block new commitments when energy is red",
+      "gate": 3,
+      "action": "If energyLevel is 'red', CONDITIONAL becomes FORBID"
+    },
+    {
+      "id": "calendar_required",
+      "description": "Time-based intents require calendar slot",
+      "gate": 6,
+      "action": "If intent requires time and calendar not available, result is DEFER"
+    }
+  ],
+
+  "energy_rules": {
+    "green": {
+      "modifier": "none",
+      "description": "Full capacity"
+    },
+    "yellow": {
+      "modifier": "cautious",
+      "description": "Reduced capacity, prefer deferrals"
+    },
+    "red": {
+      "modifier": "block",
+      "description": "CONDITIONAL becomes FORBID, no new commitments"
+    }
+  },
+
+  "actor_trust_levels": {
+    "family": 3,
+    "friend": 2,
+    "team": 2,
+    "client": 1,
+    "unknown": 0
+  }
+}
+

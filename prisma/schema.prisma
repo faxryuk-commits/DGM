@@ -1,0 +1,117 @@
+// Personal Decision & Commitment OS - Database Schema
+// Based on 02_TECHNICAL_SPEC.txt
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// ENUMS (stored as strings in SQLite)
+// =============================================
+
+// Roles: Creator, Manager, Expert, Helper, Executor
+// Intents: Money, Time, Attention, Work-change, Support, Intro, Errand, Decision-pressure, Emotional-load
+// ActorType: friend, client, team, family, unknown
+// LoadProfile: A, B, C
+// EnergyLevel: green, yellow, red
+// DecisionResult: ALLOW, DEFER, FORBID
+// CommitmentStatus: pending, confirmed, completed, cancelled
+
+// =============================================
+// DATA MODELS
+// =============================================
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  profile          UserProfile?
+  dynamicState     DynamicState?
+  incomingRequests IncomingRequest[]
+  commitments      Commitment[]
+  decisionHistory  DecisionHistory[]
+}
+
+model UserProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  primaryRole       String   // Creator, Manager, Expert, Helper, Executor
+  secondaryRole     String?  // Optional
+  loadProfile       String   // A, B, C
+  moneyPolicy       String   // JSON string
+  supportPolicy     String   // JSON string
+  hardRules         String   // JSON string array
+  calendarConnected Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model DynamicState {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  energyLevel String   @default("green") // green, yellow, red
+  updatedAt   DateTime @updatedAt
+}
+
+model IncomingRequest {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawText    String
+  parsedData String   // JSON string of ParsedRequest
+  createdAt  DateTime @default(now())
+
+  decisionResult DecisionResult?
+  commitment     Commitment?
+}
+
+// ParsedRequest structure (stored as JSON in parsedData):
+// - intent: string
+// - secondaryIntents: string[] (optional)
+// - actorType: string
+// - params: { amount?, returnDate?, agenda?, duration?, twoLinePitch? }
+// - decisionPressure: boolean
+
+model DecisionResult {
+  id          String   @id @default(cuid())
+  requestId   String   @unique
+  request     IncomingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  result      String   // ALLOW, DEFER, FORBID
+  reasonCodes String   // JSON string array
+  templateKey String
+  createdAt   DateTime @default(now())
+}
+
+model Commitment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestId   String   @unique
+  request     IncomingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  type        String   // Intent type
+  scheduledAt DateTime?
+  duration    Int?     // Minutes
+  status      String   @default("pending") // pending, confirmed, completed, cancelled
+  createdAt   DateTime @default(now())
+}
+
+model DecisionHistory {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  intent            String
+  roleAtTime        String
+  loadProfile       String
+  energyLevel       String
+  decisionResult    String   // ALLOW, DEFER, FORBID
+  commitmentCreated Boolean
+  outcomeStatus     String?  // Optional outcome tracking
+  createdAt         DateTime @default(now())
+}
