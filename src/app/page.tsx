@@ -220,7 +220,16 @@ export default function HomePage() {
   }
 
   if (!hasProfile) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">Загрузка профиля...</p>
+          <Button variant="outline" onClick={() => router.push("/onboarding")}>
+            Перейти к онбордингу
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -493,8 +502,8 @@ export default function HomePage() {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
-                    </p>
-                  </div>
+          </p>
+        </div>
                 )}
               </CardContent>
             </Card>
@@ -530,7 +539,7 @@ export default function HomePage() {
                 {isProcessing ? "Сохраняю..." : decision.result === "ALLOW" ? "Подтвердить и создать обязательство" : "Готово"}
               </Button>
             </div>
-          </div>
+        </div>
         )}
       </main>
     </div>
