@@ -15,23 +15,17 @@ import { getGoogleCalendarAuthUrl } from "@/lib/calendar-oauth";
 import type { Role, LoadProfile, ActorType } from "@/lib/types";
 
 // =============================================
-// ONBOARDING STEPS (from spec):
-// 1. Intro
-// 2. Role diagnostic
-// 3. Load profile
-// 4. Money & support policy
-// 5. Hard rules
-// 6. Calendar connect
-// 7. Confirm
+// OPTIMIZED ONBOARDING - 4 STEPS:
+// 1. Profile Setup (Intro + Role + Load Profile)
+// 2. Policies (Money + Support)
+// 3. Rules & Calendar (Hard Rules + Calendar)
+// 4. Confirm
 // =============================================
 
 const STEPS = [
-  { id: "intro", title: "Добро пожаловать" },
-  { id: "role", title: "Определение роли" },
-  { id: "load", title: "Профиль нагрузки" },
+  { id: "profile", title: "Профиль" },
   { id: "policies", title: "Политики" },
-  { id: "rules", title: "Жёсткие правила" },
-  { id: "calendar", title: "Календарь" },
+  { id: "rules", title: "Правила и календарь" },
   { id: "confirm", title: "Подтверждение" },
 ] as const;
 
@@ -156,7 +150,8 @@ export default function OnboardingPage() {
   };
 
   const handleNext = async () => {
-    if (step === 1 && roleAnswers.length === ROLE_QUESTIONS.length) {
+    // Calculate role when role questions are answered (step 0)
+    if (step === 0 && roleAnswers.length === ROLE_QUESTIONS.length) {
       setState((s) => ({ ...s, primaryRole: calculateRole() }));
     }
 
@@ -229,10 +224,8 @@ export default function OnboardingPage() {
 
   const canProceed = () => {
     switch (step) {
-      case 1:
-        return roleAnswers.length === ROLE_QUESTIONS.length;
-      case 2:
-        return !!state.loadProfile;
+      case 0: // Profile step: need role answers AND load profile
+        return roleAnswers.length === ROLE_QUESTIONS.length && !!state.loadProfile;
       default:
         return true;
     }
@@ -257,98 +250,101 @@ export default function OnboardingPage() {
             <CardTitle className="text-2xl">{STEPS[step].title}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Step 0: Intro */}
+            {/* Step 0: Profile Setup (Intro + Role + Load Profile) */}
             {step === 0 && (
-              <div className="space-y-6">
-                <CardDescription className="text-base leading-relaxed">
-                  <strong>Decision OS</strong> — это система для принятия решений и управления обязательствами.
-                </CardDescription>
-                <div className="space-y-4 text-muted-foreground">
-                  <p>Эта система:</p>
-                  <ul className="list-disc list-inside space-y-2">
-                    <li>Предотвращает импульсивное &quot;да&quot;</li>
-                    <li>Защищает ваши границы</li>
-                    <li>Устраняет размытые обещания</li>
-                    <li>Создаёт обязательства только при соблюдении условий</li>
-                  </ul>
-                  <p className="pt-4 text-foreground font-medium">
-                    Система НЕ даёт советов, НЕ мотивирует, НЕ принимает решения за вас.
-                  </p>
+              <div className="space-y-8">
+                {/* Intro */}
+                <div className="space-y-4">
+                  <CardDescription className="text-base leading-relaxed">
+                    <strong>Decision OS</strong> — система для принятия решений и управления обязательствами.
+                  </CardDescription>
+                  <div className="text-sm text-muted-foreground">
+                    <p className="mb-2">Система предотвращает импульсивное &quot;да&quot;, защищает границы и создаёт обязательства только при соблюдении условий.</p>
+                    <p className="text-xs italic">Система НЕ даёт советов, НЕ мотивирует, НЕ принимает решения за вас.</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Role Diagnostic */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold mb-2">Определение роли</h3>
+                    <CardDescription className="text-sm">
+                      Ответьте на вопросы, чтобы определить вашу основную роль. Роль диагностируется, а не выбирается.
+                    </CardDescription>
+                  </div>
+                  {ROLE_QUESTIONS.map((q, qIndex) => (
+                    <div key={qIndex} className="space-y-3">
+                      <p className="font-medium text-sm">{q.question}</p>
+                      <RadioGroup
+                        value={roleAnswers[qIndex]}
+                        onValueChange={(v) => handleRoleAnswer(qIndex, v as Role)}
+                      >
+                        {q.options.map((opt) => (
+                          <div key={opt.role} className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent/50 transition-colors">
+                            <RadioGroupItem value={opt.role} id={`${qIndex}-${opt.role}`} />
+                            <Label htmlFor={`${qIndex}-${opt.role}`} className="flex-1 cursor-pointer text-sm">
+                              {opt.text}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  ))}
+                  {state.primaryRole && (
+                    <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                      <p className="text-xs text-muted-foreground mb-1">Определённая роль:</p>
+                      <p className="font-semibold">{ROLES.find((r) => r.id === state.primaryRole)?.name}</p>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Load Profile */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Профиль нагрузки</h3>
+                    <CardDescription className="text-sm">
+                      Выберите профиль, который соответствует вашей текущей ситуации.
+                    </CardDescription>
+                  </div>
+                  <RadioGroup
+                    value={state.loadProfile}
+                    onValueChange={(v) => setState((s) => ({ ...s, loadProfile: v as LoadProfile }))}
+                    className="space-y-3"
+                  >
+                    {LOAD_PROFILES.map((profile) => (
+                      <div
+                        key={profile.id}
+                        className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                          state.loadProfile === profile.id
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-start space-x-2">
+                          <RadioGroupItem value={profile.id} id={profile.id} className="mt-1" />
+                          <Label htmlFor={profile.id} className="flex-1 cursor-pointer">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{profile.name}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {profile.id}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{profile.description}</p>
+                          </Label>
+                        </div>
+                      </div>
+                    ))}
+                  </RadioGroup>
                 </div>
               </div>
             )}
 
-            {/* Step 1: Role Diagnostic */}
+            {/* Step 1: Money & Support Policies */}
             {step === 1 && (
-              <div className="space-y-8">
-                <CardDescription>
-                  Ответьте на вопросы, чтобы определить вашу основную роль. Роль диагностируется, а не выбирается.
-                </CardDescription>
-                {ROLE_QUESTIONS.map((q, qIndex) => (
-                  <div key={qIndex} className="space-y-4">
-                    <p className="font-medium">{q.question}</p>
-                    <RadioGroup
-                      value={roleAnswers[qIndex]}
-                      onValueChange={(v) => handleRoleAnswer(qIndex, v as Role)}
-                    >
-                      {q.options.map((opt) => (
-                        <div key={opt.role} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
-                          <RadioGroupItem value={opt.role} id={`${qIndex}-${opt.role}`} />
-                          <Label htmlFor={`${qIndex}-${opt.role}`} className="flex-1 cursor-pointer">
-                            {opt.text}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                ))}
-                {state.primaryRole && (
-                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                    <p className="text-sm text-muted-foreground mb-1">Определённая роль:</p>
-                    <p className="font-semibold text-lg">{ROLES.find((r) => r.id === state.primaryRole)?.name}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Step 2: Load Profile */}
-            {step === 2 && (
-              <div className="space-y-6">
-                <CardDescription>
-                  Выберите профиль нагрузки, который соответствует вашей текущей ситуации.
-                </CardDescription>
-                <RadioGroup
-                  value={state.loadProfile}
-                  onValueChange={(v) => setState((s) => ({ ...s, loadProfile: v as LoadProfile }))}
-                  className="space-y-4"
-                >
-                  {LOAD_PROFILES.map((profile) => (
-                    <div
-                      key={profile.id}
-                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                        state.loadProfile === profile.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <RadioGroupItem value={profile.id} id={profile.id} className="mt-1" />
-                        <Label htmlFor={profile.id} className="flex-1 cursor-pointer">
-                          <span className="font-semibold text-lg">{profile.name}</span>
-                          <Badge variant="secondary" className="ml-2">
-                            {profile.id}
-                          </Badge>
-                          <p className="text-muted-foreground mt-1">{profile.description}</p>
-                        </Label>
-                      </div>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-            )}
-
-            {/* Step 3: Money & Support Policies */}
-            {step === 3 && (
               <div className="space-y-8">
                 <div className="space-y-6">
                   <div>
@@ -474,87 +470,93 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 4: Hard Rules */}
-            {step === 4 && (
-              <div className="space-y-6">
-                <CardDescription>
-                  Укажите жёсткие правила — категории запросов, которые автоматически отклоняются.
-                  Например: &quot;никаких созвонов до 10 утра&quot;, &quot;не даю денег коллегам&quot;.
-                </CardDescription>
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="Введите правило..."
-                    value={hardRuleInput}
-                    onChange={(e) => setHardRuleInput(e.target.value)}
-                    className="flex-1"
-                    rows={2}
-                  />
-                  <Button onClick={addHardRule} disabled={!hardRuleInput.trim()}>
-                    Добавить
-                  </Button>
-                </div>
-                {state.hardRules.length > 0 && (
-                  <div className="space-y-2">
-                    {state.hardRules.map((rule, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
-                        <span>{rule}</span>
-                        <Button variant="ghost" size="sm" onClick={() => removeHardRule(i)}>
-                          ✕
-                        </Button>
-                      </div>
-                    ))}
+            {/* Step 2: Hard Rules & Calendar */}
+            {step === 2 && (
+              <div className="space-y-8">
+                {/* Hard Rules */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Жёсткие правила</h3>
+                    <CardDescription className="text-sm">
+                      Укажите категории запросов, которые автоматически отклоняются.
+                      Например: &quot;никаких созвонов до 10 утра&quot;, &quot;не даю денег коллегам&quot;.
+                    </CardDescription>
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Step 5: Calendar Connect */}
-            {step === 5 && (
-              <div className="space-y-6">
-                <CardDescription>
-                  Подключите Google Calendar для автоматической проверки доступности слотов.
-                  Это необязательно — можно пропустить.
-                </CardDescription>
-                <div className="flex flex-col gap-4">
-                  {state.calendarConnected ? (
-                    <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                      <p className="text-green-600 dark:text-green-400 font-medium text-center">
-                        ✓ Календарь подключён
-                      </p>
+                  <div className="flex gap-2">
+                    <Textarea
+                      placeholder="Введите правило..."
+                      value={hardRuleInput}
+                      onChange={(e) => setHardRuleInput(e.target.value)}
+                      className="flex-1"
+                      rows={2}
+                    />
+                    <Button onClick={addHardRule} disabled={!hardRuleInput.trim()}>
+                      Добавить
+                    </Button>
+                  </div>
+                  {state.hardRules.length > 0 && (
+                    <div className="space-y-2">
+                      {state.hardRules.map((rule, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
+                          <span className="text-sm">{rule}</span>
+                          <Button variant="ghost" size="sm" onClick={() => removeHardRule(i)}>
+                            ✕
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    <>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-center py-6"
-                        onClick={() => {
-                          if (!userId) return;
-                          
-                          try {
-                            // Use client-side OAuth URL generation
-                            const authUrl = getGoogleCalendarAuthUrl(userId);
-                            
-                            // Redirect to Google OAuth
-                            window.location.href = authUrl;
-                          } catch (error) {
-                            console.error('OAuth init error:', error);
-                            alert('Ошибка подключения календаря. Проверьте настройки NEXT_PUBLIC_GOOGLE_CLIENT_ID.');
-                          }
-                        }}
-                      >
-                        Подключить Google Calendar
-                      </Button>
-                      <p className="text-sm text-muted-foreground text-center">
-                        Можно подключить позже в настройках
-                      </p>
-                    </>
                   )}
                 </div>
+
+                <Separator />
+
+                {/* Calendar Connect */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Календарь</h3>
+                    <CardDescription className="text-sm">
+                      Подключите Google Calendar для автоматической проверки доступности слотов.
+                      Это необязательно — можно пропустить.
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    {state.calendarConnected ? (
+                      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                        <p className="text-green-600 font-medium text-center">
+                          ✓ Календарь подключён
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-center py-6"
+                          onClick={() => {
+                            if (!userId) return;
+                            
+                            try {
+                              const authUrl = getGoogleCalendarAuthUrl(userId);
+                              window.location.href = authUrl;
+                            } catch (error) {
+                              console.error('OAuth init error:', error);
+                              alert('Ошибка подключения календаря. Проверьте настройки NEXT_PUBLIC_GOOGLE_CLIENT_ID.');
+                            }
+                          }}
+                        >
+                          Подключить Google Calendar
+                        </Button>
+                        <p className="text-sm text-muted-foreground text-center">
+                          Можно подключить позже в настройках
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Step 6: Confirm */}
-            {step === 6 && (
+            {/* Step 3: Confirm */}
+            {step === 3 && (
               <div className="space-y-6">
                 <CardDescription>Проверьте ваши настройки перед завершением.</CardDescription>
                 <div className="space-y-4">

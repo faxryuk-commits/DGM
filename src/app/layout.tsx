@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className="dark">
+    <html lang="ru">
       <body
         className={`${dmSans.variable} ${jetBrainsMono.variable} font-sans antialiased min-h-screen bg-background`}
       >
