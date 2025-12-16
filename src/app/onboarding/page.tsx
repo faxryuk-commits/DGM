@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { getGoogleCalendarAuthUrl } from "@/lib/calendar-oauth";
 import type { Role, LoadProfile, ActorType } from "@/lib/types";
 
 // =============================================
@@ -508,22 +509,18 @@ export default function OnboardingPage() {
                       <Button
                         variant="outline"
                         className="w-full justify-center py-6"
-                        onClick={async () => {
+                        onClick={() => {
                           if (!userId) return;
                           
                           try {
-                            const res = await fetch(`/api/auth/google?userId=${userId}`);
-                            const data = await res.json();
+                            // Use client-side OAuth URL generation
+                            const authUrl = getGoogleCalendarAuthUrl(userId);
                             
-                            if (data.authUrl) {
-                              // Redirect to Google OAuth
-                              window.location.href = data.authUrl;
-                            } else {
-                              alert('Ошибка подключения. Проверьте настройки Google Calendar.');
-                            }
+                            // Redirect to Google OAuth
+                            window.location.href = authUrl;
                           } catch (error) {
                             console.error('OAuth init error:', error);
-                            alert('Ошибка подключения календаря.');
+                            alert('Ошибка подключения календаря. Проверьте настройки NEXT_PUBLIC_GOOGLE_CLIENT_ID.');
                           }
                         }}
                       >
